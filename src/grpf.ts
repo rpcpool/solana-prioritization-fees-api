@@ -26,6 +26,96 @@ interface RpcResponse {
   error?: any;
 }
 
+export const getMinPrioritizationFeeByPercentile = async (
+  connection: Connection,
+  config: GetRecentPrioritizationFeesByPercentileConfig,
+  slotsToReturn?: number
+): Promise<number> => {
+  const recentPrioritizationFees =
+    await getRecentPrioritizationFeesByPercentile(
+      connection,
+      config,
+      slotsToReturn
+    );
+
+  recentPrioritizationFees.sort(
+    (a, b) => b.prioritizationFee - a.prioritizationFee
+  );
+
+  return recentPrioritizationFees[recentPrioritizationFees.length - 1]
+    .prioritizationFee;
+};
+
+export const getMaxPrioritizationFeeByPercentile = async (
+  connection: Connection,
+  config: GetRecentPrioritizationFeesByPercentileConfig,
+  slotsToReturn?: number
+): Promise<number> => {
+  const recentPrioritizationFees =
+    await getRecentPrioritizationFeesByPercentile(
+      connection,
+      config,
+      slotsToReturn
+    );
+
+  recentPrioritizationFees.sort(
+    (a, b) => b.prioritizationFee - a.prioritizationFee
+  );
+
+  return recentPrioritizationFees[0].prioritizationFee;
+};
+
+export const getMeanPrioritizationFeeByPercentile = async (
+  connection: Connection,
+  config: GetRecentPrioritizationFeesByPercentileConfig,
+  slotsToReturn?: number
+): Promise<number> => {
+  const recentPrioritizationFees =
+    await getRecentPrioritizationFeesByPercentile(
+      connection,
+      config,
+      slotsToReturn
+    );
+
+  const mean = Math.ceil(
+    recentPrioritizationFees.reduce(
+      (acc, fee) => acc + fee.prioritizationFee,
+      0
+    ) / recentPrioritizationFees.length
+  );
+
+  return mean;
+};
+
+export const getMedianPrioritizationFeeByPercentile = async (
+  connection: Connection,
+  config: GetRecentPrioritizationFeesByPercentileConfig,
+  slotsToReturn?: number
+): Promise<number> => {
+  const recentPrioritizationFees =
+    await getRecentPrioritizationFeesByPercentile(
+      connection,
+      config,
+      slotsToReturn
+    );
+
+  recentPrioritizationFees.sort(
+    (a, b) => a.prioritizationFee - b.prioritizationFee
+  );
+
+  const half = Math.floor(recentPrioritizationFees.length / 2);
+
+  if (recentPrioritizationFees.length % 2) {
+    return recentPrioritizationFees[half].prioritizationFee;
+  }
+
+  return Math.ceil(
+    (recentPrioritizationFees[half - 1].prioritizationFee +
+      recentPrioritizationFees[half].prioritizationFee) /
+      2
+  );
+};
+
 // this function gets the recent prioritization fees from the RPC. The `rpcRequest` comes from webjs.Connection
 const getRecentPrioritizationFeesFromRpc = async (
   config: any,

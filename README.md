@@ -25,3 +25,10 @@ slotsToReturn?: n number of slots will returned. By default RPC returns 150
 Returns: `RecentPrioritizationFees[]` same as `Connection.getRecentPrioritizationFees`
 
 To maintain compatibility with other RPC providers who might not support the `percentile` parameter, this function takes in a `fallback` parameter which defaults to `true`. The function makes 2 JSON RPC calls in parallel with and without the `percentile` parameter. If your RPC is Triton, you'll get the result returned by it. If not, you'll get the result returned by your other RPC provider.
+
+### Helper Functions
+There are the following helper functions that return `Promise<number>`
+- `getMinPrioritizationFeeByPercentile`
+- `getMaxPrioritizationFeeByPercentile`
+- `getMeanPrioritizationFeeByPercentile`
+- `getMedianPrioritizationFeeByPercentile`
