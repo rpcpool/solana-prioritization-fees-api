@@ -1,6 +1,6 @@
 import { Connection } from "@solana/web3.js";
 import { PublicKey } from "@solana/web3.js";
-import { getRecentPrioritizationFeesByPercentile } from "../src/grpf";
+import { PriotitizationFeeLevels, getRecentPrioritizationFeesByPercentile } from "../src/grpf";
 import * as dotenv from "dotenv";
 
 dotenv.config({ path: "../.env" });
@@ -16,8 +16,6 @@ describe("gRPF with percentile test", () => {
         connection,
         {}
       );
-      console.log(result);
-
       expect(result.length).toBeGreaterThan(0);
     });
 
@@ -51,6 +49,28 @@ describe("gRPF with percentile test", () => {
       expect(result.length).toBeGreaterThan(0);
     });
 
+    it(`params: [["RNXnAJV1DeBt6Lytjz4wYzvS3d6bhsfidS5Np4ovwZz"],{"percentile":PriotitizationFeeLevels.MEDIUM}]`, async () => {
+      const result = await getRecentPrioritizationFeesByPercentile(connection, {
+        lockedWritableAccounts: [
+          new PublicKey("RNXnAJV1DeBt6Lytjz4wYzvS3d6bhsfidS5Np4ovwZz"),
+        ],
+        percentile: PriotitizationFeeLevels.MEDIUM,
+        fallback: false,
+      });
+      expect(result.length).toBeGreaterThan(0);
+    });
+
+    it(`params: [["RNXnAJV1DeBt6Lytjz4wYzvS3d6bhsfidS5Np4ovwZz"],{"percentile":PriotitizationFeeLevels.MEDIUM}, slotsToReturn: 10]`, async () => {
+      const result = await getRecentPrioritizationFeesByPercentile(connection, {
+        lockedWritableAccounts: [
+          new PublicKey("RNXnAJV1DeBt6Lytjz4wYzvS3d6bhsfidS5Np4ovwZz"),
+        ],
+        percentile: PriotitizationFeeLevels.MEDIUM,
+        fallback: false,
+      }, 10); 
+      expect(result.length).toEqual(10);
+    });
+
     it(`params: invalid percentile 50000`, async () => {
       const result = await getRecentPrioritizationFeesByPercentile(connection, {
         lockedWritableAccounts: [
@@ -59,10 +79,10 @@ describe("gRPF with percentile test", () => {
         percentile: 50000,
         fallback: false,
       });
-
       expect(
         (result as unknown as { code: String; message: String }).message
       ).toEqual("Percentile is too big; max value is 10000");
     });
+
   });
 });

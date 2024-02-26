@@ -3,11 +3,19 @@ import {
   Connection,
   type GetRecentPrioritizationFeesConfig,
 } from "@solana/web3.js";
-import axios from "axios";
 
+// easy to use values for user convenience
+export const enum PriotitizationFeeLevels {
+  LOW = 2500,
+  MEDIUM = 5000,
+  HIGH = 7500,
+  MAX = 10000,
+}
+
+// extending the original interface to include the percentile and fallback options and maintain compatibility
 interface GetRecentPrioritizationFeesByPercentileConfig
   extends GetRecentPrioritizationFeesConfig {
-  percentile?: number;
+  percentile?: PriotitizationFeeLevels | number;
   fallback?: boolean;
 }
 
@@ -18,67 +26,90 @@ interface RpcResponse {
   error?: any;
 }
 
-export const getRecentPrioritizationFeesByPercentile = async function (
+// this function gets the recent prioritization fees from the RPC. The `rpcRequest` comes from webjs.Connection
+const getRecentPrioritizationFeesFromRpc = async (
+  config: any,
+  rpcRequest: any
+) => {
+  const accounts = config?.lockedWritableAccounts?.map(
+    (key: { toBase58: () => any }) => key.toBase58()
+  );
+  const args = accounts?.length ? [accounts] : [[]];
+  config.percentile && args.push({ percentile: config.percentile });
+
+  const response = await rpcRequest("getRecentPrioritizationFees", args);
+
+  return response;
+};
+
+export const getRecentPrioritizationFeesByPercentile = async (
   connection: Connection,
-  config?: GetRecentPrioritizationFeesByPercentileConfig
-): Promise<RecentPrioritizationFees[]> {
-  const {
-    percentile,
-    fallback = true,
-    lockedWritableAccounts = [],
-  } = config || {};
+  config: GetRecentPrioritizationFeesByPercentileConfig,
+  slotsToReturn?: number
+): Promise<RecentPrioritizationFees[]> => {
+  const { fallback = true, lockedWritableAccounts = [] } = config || {};
+  slotsToReturn =
+    slotsToReturn && Number.isInteger(slotsToReturn) ? slotsToReturn : -1;
+
   const promises = [];
+
   let tritonRpcResponse: RpcResponse | undefined = undefined;
   let fallbackRpcResponse: RpcResponse | undefined = undefined;
 
+  // @solana/web3.js uses the private method `_rpcRequest` internally to make RPC requests which is not exposed by TypeScript
+  // it is available in JavaScript, however, TypeScript enforces it as unavailable and complains, the following line is a workaround
+
+  /* @ts-ignore */
+  const rpcRequest = connection._rpcRequest;
+
+  // to save fallback roundtrips if your RPC is not Triton, both RPCs are called in parallel to minimize latency
   promises.push(
-    axios
-      .post<RpcResponse>(connection.rpcEndpoint, {
-        method: "getRecentPrioritizationFees",
-        jsonrpc: "2.0",
-        params: [lockedWritableAccounts, { percentile }],
-        id: "1",
-      })
-      .then((result) => {
-        tritonRpcResponse = result.data;
-      })
+    getRecentPrioritizationFeesFromRpc(config, rpcRequest).then((result) => {
+      tritonRpcResponse = result;
+    })
   );
 
   if (fallback) {
     promises.push(
-      axios
-        .post(connection.rpcEndpoint, {
-          method: "getRecentPrioritizationFees",
-          jsonrpc: "2.0",
-          params: [lockedWritableAccounts],
-          id: "1",
-        })
-        .then((result) => {
-          fallbackRpcResponse = result.data;
-        })
+      getRecentPrioritizationFeesFromRpc(
+        { lockedWritableAccounts },
+        rpcRequest
+      ).then((result) => {
+        fallbackRpcResponse = result;
+      })
     );
   }
 
   await Promise.all(promises);
 
+  // satisfying typescript by casting the response to RpcResponse
   const tritonGRPFResponse = tritonRpcResponse as unknown as RpcResponse;
   const fallbackGRPFResponse = fallbackRpcResponse as unknown as RpcResponse;
 
+  let recentPrioritizationFees: RecentPrioritizationFees[] = [];
+
   if (tritonGRPFResponse?.result) {
-    return tritonGRPFResponse.result!;
+    recentPrioritizationFees = tritonGRPFResponse.result!;
   }
 
-  if (fallbackGRPFResponse?.result) {
-    return fallbackGRPFResponse.result!;
+  if (fallbackGRPFResponse?.result && !tritonGRPFResponse?.result) {
+    recentPrioritizationFees = fallbackGRPFResponse.result!;
   }
 
   if (fallback && fallbackGRPFResponse.error) {
     return fallbackGRPFResponse.error;
   }
 
-  if (tritonGRPFResponse) {
+  if (tritonGRPFResponse?.error) {
     return tritonGRPFResponse.error;
   }
 
-  throw new Error("Failed to get prioritization fees");
+  // sort the prioritization fees by slot
+  recentPrioritizationFees.sort((a, b) => a.slot - b.slot);
+
+  // return the first n prioritization fees
+  if (slotsToReturn > 0)
+    return recentPrioritizationFees.slice(0, slotsToReturn);
+
+  return recentPrioritizationFees;
 };
