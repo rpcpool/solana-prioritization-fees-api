@@ -38,12 +38,11 @@ export const getMinPrioritizationFeeByPercentile = async (
       slotsToReturn
     );
 
-  recentPrioritizationFees.sort(
-    (a, b) => b.prioritizationFee - a.prioritizationFee
-  );
+  const minPriorityFee = recentPrioritizationFees.reduce((min, current) => {
+    return current.prioritizationFee < min.prioritizationFee ? current : min;
+  });
 
-  return recentPrioritizationFees[recentPrioritizationFees.length - 1]
-    .prioritizationFee;
+  return minPriorityFee.prioritizationFee;
 };
 
 export const getMaxPrioritizationFeeByPercentile = async (
@@ -58,11 +57,11 @@ export const getMaxPrioritizationFeeByPercentile = async (
       slotsToReturn
     );
 
-  recentPrioritizationFees.sort(
-    (a, b) => b.prioritizationFee - a.prioritizationFee
-  );
+  const maxPriorityFee = recentPrioritizationFees.reduce((max, current) => {
+    return current.prioritizationFee > max.prioritizationFee ? current : max;
+  });
 
-  return recentPrioritizationFees[0].prioritizationFee;
+  return maxPriorityFee.prioritizationFee;
 };
 
 export const getMeanPrioritizationFeeByPercentile = async (
