@@ -56,25 +56,25 @@ describe("gRPF with percentile test", () => {
       expect(result.length).toBeGreaterThan(0);
     });
 
-    it(`params: [["RNXnAJV1DeBt6Lytjz4wYzvS3d6bhsfidS5Np4ovwZz"],{"percentile":PriotitizationFeeLevels.MEDIUM}]`, async () => {
+    it(`params: [["RNXnAJV1DeBt6Lytjz4wYzvS3d6bhsfidS5Np4ovwZz"],{"percentile":PriotitizationFeeLevels.MEDIAN}]`, async () => {
       const result = await getRecentPrioritizationFeesByPercentile(connection, {
         lockedWritableAccounts: [
           new PublicKey("RNXnAJV1DeBt6Lytjz4wYzvS3d6bhsfidS5Np4ovwZz"),
         ],
-        percentile: PriotitizationFeeLevels.MEDIUM,
+        percentile: PriotitizationFeeLevels.MEDIAN,
         fallback: false,
       });
       expect(result.length).toBeGreaterThan(0);
     });
 
-    it(`params: [["RNXnAJV1DeBt6Lytjz4wYzvS3d6bhsfidS5Np4ovwZz"],{"percentile":PriotitizationFeeLevels.MEDIUM}, slotsToReturn: 10]`, async () => {
+    it(`params: [["RNXnAJV1DeBt6Lytjz4wYzvS3d6bhsfidS5Np4ovwZz"],{"percentile":PriotitizationFeeLevels.MEDIAN}, slotsToReturn: 10]`, async () => {
       const result = await getRecentPrioritizationFeesByPercentile(
         connection,
         {
           lockedWritableAccounts: [
             new PublicKey("RNXnAJV1DeBt6Lytjz4wYzvS3d6bhsfidS5Np4ovwZz"),
           ],
-          percentile: PriotitizationFeeLevels.MEDIUM,
+          percentile: PriotitizationFeeLevels.MEDIAN,
           fallback: false,
         },
         10

@@ -7,7 +7,7 @@ import {
 // easy to use values for user convenience
 export const enum PriotitizationFeeLevels {
   LOW = 2500,
-  MEDIUM = 5000,
+  MEDIAN = 5000,
   HIGH = 7500,
   MAX = 10000,
 }
