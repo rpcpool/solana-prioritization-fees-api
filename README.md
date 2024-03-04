@@ -4,6 +4,8 @@ Ref: [JSON RPC getrecentprioritizationfees](https://solana.com/docs/rpc/http/get
 
 This repo contains example usage of the `percentile` flag in the `getRecentPrioritizationFees` JSON RPC call to Triton's Solana RPC endpoints.
 
+**This functionality is currently in beta testing. It requires a patch applied to the Solana validator source for proper operation. Details on the patches are available here: https://docs.triton.one/chains/solana/improved-priority-fees-api/for-rpc-providers**
+
 ### How to use it?
 This repo contains a function `getRecentPrioritizationFeesByPercentile` in `src/grpf.ts` that you can directly copy paste in your code and start using it. See the example usage in `/tests/grpf2.test.ts`
 
